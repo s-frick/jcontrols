@@ -1,11 +1,11 @@
-package de.sfrick.jmonad;
+package io.github.sfrick.jcontrols;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-import de.sfrick.jmonad.Try.Failure;
-import de.sfrick.jmonad.Try.Success;
+import io.github.sfrick.jcontrols.Try.Failure;
+import io.github.sfrick.jcontrols.Try.Success;
 
 public class TryTest {
  
