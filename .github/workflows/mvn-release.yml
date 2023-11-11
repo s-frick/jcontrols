@@ -24,7 +24,7 @@ jobs:
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
       - name: Deploy with Maven
-        run: mvn -B clean deploy -Drevision=${{ github.ref_name }}
+        run: mvn -B clean deploy -Drevision=${{ github.ref_name }} -Possrh
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
