@@ -3,6 +3,7 @@ package io.github.sfrick.jcontrols;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public sealed interface Try<A> permits Try.Failure, Try.Success {
@@ -26,16 +27,25 @@ public sealed interface Try<A> permits Try.Failure, Try.Success {
   }
 
   /**
-   * @param <A>
-   * @param supplier
+   * @param runnable
    * @return
    */
-  static <A> Try<A> of(Supplier<A> supplier) {
-    Objects.requireNonNull(supplier);
+  static Try<Void> run(CheckedRunnable runnable){
+    Objects.requireNonNull(runnable);
     try {
-      return new Success<>(supplier.get());
-    } catch (Throwable cause) {
-      return new Failure<>(cause);
+      runnable.run();
+      return new Success<Void>(null);
+    } catch(Throwable t) {
+      return new Failure<>(t);
+    }
+  }
+
+  static <A> Try<A> of(Function0<A> work){
+    Objects.requireNonNull(work);
+    try {
+      return new Success<A>(work.apply());
+    } catch(Throwable t) {
+      return new Failure<>(t);
     }
   }
 
@@ -99,6 +109,8 @@ public sealed interface Try<A> permits Try.Failure, Try.Success {
    */
   <B> Try<B> flatMap(Function<? super A, ? extends Try<B>> f);
 
+  Try<A> filter(Predicate<A> predicate, Supplier<? extends Throwable> throwable);
+
   record Success<T>(T value) implements Try<T> {
     @Override
     public <B> Try<B> flatMap(Function<? super T, ? extends Try<B>> f) {
@@ -148,6 +160,13 @@ public sealed interface Try<A> permits Try.Failure, Try.Success {
     @Override
     public T orElse(Supplier<T> other) {
       return this.value();
+    }
+
+    @Override
+    public Try<T> filter(Predicate<T> predicate, Supplier<? extends Throwable> throwable) {
+      Objects.requireNonNull(predicate);
+      Objects.requireNonNull(throwable);
+      return predicate.test(this.value()) ? this : Try.failure(throwable.get());
     }
   }
 
@@ -200,6 +219,13 @@ public sealed interface Try<A> permits Try.Failure, Try.Success {
     @Override
     public T orElse(Supplier<T> other) {
       return other.get();
+    }
+
+    @Override
+    public Try<T> filter(Predicate<T> predicate, Supplier<? extends Throwable> throwable) {
+      Objects.requireNonNull(predicate);
+      Objects.requireNonNull(throwable);
+      return Try.failure(throwable.get());
     }
   }
 }
