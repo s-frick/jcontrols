@@ -9,6 +9,39 @@ import io.github.sfrick.jcontrols.Try.Success;
 
 public class TryTest {
  
+
+  void runnableThrowCheckedEx() throws Exception {
+    throw new Exception();
+  }
+  String function0ThrowCheckedEx() throws Exception {
+    throw new Exception();
+  }
+  String function0ReturnsSuccess() throws Exception {
+    return "success";
+  }
+
+  @Test
+  void shouldReturnFailureWhenCheckedRunnableThrowsCheckedException() {
+    boolean actual = Try.run(() -> runnableThrowCheckedEx()).isFailure();
+
+    assertThat(actual).isTrue();
+  }
+
+  @Test
+  void shouldReturnFailureWhenFunction0ThrowsCheckedException() {
+    boolean actual = Try.of(() -> function0ThrowCheckedEx()).isFailure();
+
+    assertThat(actual).isTrue();
+  }
+
+  @Test
+  void shouldReturnSuccessWhenFunction0IsCalled() {
+    Try<String> actual = Try.of(() -> function0ReturnsSuccess());
+
+    assertThat(actual.isSuccess()).isTrue();
+    assertThat(actual.orElse(() -> "did not work")).isEqualTo("success");
+  }
+
   @Test
   void shouldReturnFailure() {
     var ex = new RuntimeException("failure");
@@ -37,14 +70,30 @@ public class TryTest {
 
   @Test
   void shouldNotMapAFailureValue() {
-    var ex = new RuntimeException("failure");
-    Try<String> origin = Try.failure(ex);
+    Try<String> origin = Try.of(() -> function0ThrowCheckedEx());
 
     Try<String> actual = origin.map(String::toUpperCase);
 
     assertThat(actual.orElse("FAILURE")).isEqualTo("FAILURE");
   }
 
+  @Test
+  void positivePredicateShouldReturnFailure() {
+    Try<String> origin = Try.of(() -> function0ReturnsSuccess());
+
+    Try<String> actual = origin.filter(s -> !s.isEmpty(), () -> new Exception("boom!"));
+
+    assertThat(actual.orElse("FAILURE")).isEqualTo("success");
+  }
+
+  @Test
+  void failingPredicateShouldReturnFailure() {
+    Try<String> origin = Try.of(() -> function0ReturnsSuccess());
+
+    Try<String> actual = origin.filter(s -> s.isEmpty(), () -> new Exception("boom!"));
+
+    assertThat(actual.orElse("FAILURE")).isEqualTo("FAILURE");
+  }
 
   Try<String> toSplit(String s) {
     var ex = new RuntimeException("failure");
@@ -63,8 +112,7 @@ public class TryTest {
 
   @Test
   void shouldNotFlatMapAFailureValue() {
-    var ex = new RuntimeException("failure");
-    Try<String> origin = Try.failure(ex);
+    Try<String> origin = Try.of(() -> function0ThrowCheckedEx());
 
     Try<String> actual = origin.flatMap(this::toSplit);
 
