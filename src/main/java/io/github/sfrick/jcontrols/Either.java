@@ -78,14 +78,12 @@ public sealed interface Either<E, A> permits Either.Failure, Either.Success {
   /**
    * @return true if this Either is a failure value, otherwise true
    */
-  boolean isLeft();
+  boolean isFailure();
 
   /**
    * @return true if this Either is a success value, otherwise true
    */
-  default boolean isRight() {
-    return !isLeft();
-  }
+  boolean isSuccess();
 
   /**
    * Consumes the success value of this Either with the provided {@link Consumer}, if an success value is present, otherwise no Operation.
@@ -150,10 +148,15 @@ public sealed interface Either<E, A> permits Either.Failure, Either.Success {
     }
 
     @Override
-    public boolean isLeft() {
+    public boolean isFailure() {
       return true;
     }
 
+    @Override
+    public boolean isSuccess() {
+      return false;
+    }
+    
     @Override
     public <F> Either<F, A> mapLeft(Function<? super E, ? extends F> f) {
       Objects.requireNonNull(f, "Mapper function is null.");
@@ -201,10 +204,15 @@ public sealed interface Either<E, A> permits Either.Failure, Either.Success {
     }
 
     @Override
-    public boolean isLeft() {
+    public boolean isFailure() {
       return false;
     }
 
+    @Override
+    public boolean isSuccess() {
+      return true;
+    }
+    
     @Override
     @SuppressWarnings("unchecked")
     public <F> Either<F, A> mapLeft(Function<? super E, ? extends F> f) {
