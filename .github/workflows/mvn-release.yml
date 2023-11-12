@@ -23,7 +23,7 @@ jobs:
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
       - name: set version
-        run: echo "REVISION=${\"${{ github.ref_name }}\"//v/}" >> $GITHUB_ENV
+        run: echo "REVISION=${"${{ github.ref_name }}"//v/}" >> $GITHUB_ENV
 
       - name: Deploy with Maven
         run: mvn -B clean deploy -Drevision=$REVISION -Possrh
