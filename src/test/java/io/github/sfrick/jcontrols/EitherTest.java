@@ -47,7 +47,7 @@ public class EitherTest {
   void shouldMapAFailureValue() {
     Either<String, String> origin = Either.failure("failure");
 
-    Either<String, String> actual = origin.mapLeft(String::toUpperCase);
+    Either<String, String> actual = origin.mapF(String::toUpperCase);
 
     assertThat(actual).isInstanceOf(Failure.class);
     assertThat(((Failure<String, String>)actual).value()).isEqualTo("FAILURE");
