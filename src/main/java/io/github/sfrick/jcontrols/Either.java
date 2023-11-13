@@ -66,8 +66,19 @@ public sealed interface Either<E, A> permits Either.Failure, Either.Success {
    * @return an Either describing the result of applying a mapping function to the failure value of this Either, if a failure value is present, otherwise the origin casted Either
    * @throws NullPointerException - if the mapping function is null
    */
-  <F> Either<F, A> mapLeft(Function<? super E, ? extends F> f);
+  <F> Either<F, A> mapF(Function<? super E, ? extends F> f);
 
+  /**
+   * Alias of {@link #mapF(Function)} 
+   * @param <F> - The failure type of the result of the mapping function
+   * @param f - a mapping function to apply to the failure value, if present
+   * @return an Either describing the result of applying a mapping function to the failure value of this Either, if a failure value is present, otherwise the origin casted Either
+   * @throws NullPointerException - if the mapping function is null
+   */
+  default <F> Either<F, A> mapFailure(Function<? super E, ? extends F> f) {
+    return mapF(f);
+  }
+  
   /**
    * Converts this Either to an Optional.
    * If this Either has a success value, an non-empty Optional containing the success value. Otherwise returns an empty Optional.
@@ -158,7 +169,7 @@ public sealed interface Either<E, A> permits Either.Failure, Either.Success {
     }
     
     @Override
-    public <F> Either<F, A> mapLeft(Function<? super E, ? extends F> f) {
+    public <F> Either<F, A> mapF(Function<? super E, ? extends F> f) {
       Objects.requireNonNull(f, "Mapper function is null.");
       return new Failure<>(f.apply(value));
     }
@@ -215,7 +226,7 @@ public sealed interface Either<E, A> permits Either.Failure, Either.Success {
     
     @Override
     @SuppressWarnings("unchecked")
-    public <F> Either<F, A> mapLeft(Function<? super E, ? extends F> f) {
+    public <F> Either<F, A> mapF(Function<? super E, ? extends F> f) {
       return (Either<F, A>) this;
     }
 
