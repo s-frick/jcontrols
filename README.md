@@ -12,7 +12,7 @@ A library that provide useful functional control types.
 <dependency>
   <groupId>io.github.s-frick</groupId>
   <artifactId>controls</artifactId>
-  <version>0.2.0</version>
+  <version>0.3.0</version>
 </dependency>
 ```
 
