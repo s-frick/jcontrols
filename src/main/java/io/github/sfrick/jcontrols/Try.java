@@ -30,7 +30,7 @@ public sealed interface Try<A> permits Try.Failure, Try.Success {
    * @param runnable
    * @return
    */
-  static Try<Void> run(CheckedRunnable runnable){
+  static Try<Void> ofRunnable(CheckedRunnable runnable){
     Objects.requireNonNull(runnable);
     try {
       runnable.run();
@@ -47,6 +47,14 @@ public sealed interface Try<A> permits Try.Failure, Try.Success {
     } catch(Throwable t) {
       return new Failure<>(t);
     }
+  }
+
+  static <A extends AutoCloseable> WithResouce1<A> withResource(Function0<A> resource) {
+    return new WithResouce1<>(resource);
+  }
+
+  static <A1 extends AutoCloseable, A2 extends AutoCloseable> WithResouce2<A1, A2> withResource(Function0<A1> resource1, Function0<A2> resource2) {
+    return new WithResouce2<>(resource1,resource2);
   }
 
   /**
@@ -226,6 +234,104 @@ public sealed interface Try<A> permits Try.Failure, Try.Success {
       Objects.requireNonNull(predicate);
       Objects.requireNonNull(throwable);
       return Try.failure(throwable.get());
+    }
+  }
+  
+  record WithResouce1<A1 extends AutoCloseable>(Function0<A1> resource) {
+    public <A2 extends AutoCloseable> WithResouce2<A1, A2> withResource(Function0<A2> resource2) {
+      return new WithResouce2<A1, A2>(resource, resource2);
+    }
+    public <B> Try<B> of(Function1<? super A1, ? extends B> work) {
+      return Try.of(() -> {
+        try(A1 a = resource.apply()){
+          return work.apply(a);
+        }
+      });
+    }
+
+    public Try<Void> ofConsumer(CheckedConsumer1<A1> work) {
+      return Try.ofRunnable(() -> {
+        try(A1 a = resource.apply()){
+          work.apply(a);
+        }
+      });
+    }
+  }
+
+  record WithResouce2<A1 extends AutoCloseable, A2 extends AutoCloseable>(Function0<A1> resource1, Function0<A2> resource2) {
+    public <A3 extends AutoCloseable> WithResouce3<A1, A2, A3> withResource(Function0<A3> resource3) {
+      return new WithResouce3<A1, A2, A3>(resource1, resource2, resource3);
+    }
+    public <B>Try<B> of(Function2<? super A1, ? super A2, ? extends B> work) {
+      return Try.of(() -> {
+        try(A1 a1 = resource1.apply(); A2 a2 = resource2.apply()){
+          return work.apply(a1, a2);
+        }
+      });
+    }
+    public Try<Void> ofConsumer(CheckedConsumer2<A1, A2> work) {
+      return Try.ofRunnable(() -> {
+        try(A1 a1 = resource1.apply(); A2 a2 = resource2.apply()){
+          work.apply(a1, a2);
+        }
+      });
+    }
+  }
+
+  record WithResouce3<A1 extends AutoCloseable, A2 extends AutoCloseable, A3 extends AutoCloseable>(Function0<A1> resource1, Function0<A2> resource2, Function0<A3> resource3) {
+    public <A4 extends AutoCloseable> WithResouce4<A1, A2, A3, A4> withResource(Function0<A4> resource4) {
+      return new WithResouce4<>(resource1, resource2, resource3, resource4);
+    }
+    public <B>Try<B> of(Function3<? super A1, ? super A2, ? super A3, ? extends B> work) {
+      return Try.of(() -> {
+        try(A1 a1 = resource1.apply(); A2 a2 = resource2.apply(); A3 a3 = resource3.apply()){
+          return work.apply(a1, a2, a3);
+        }
+      });
+    }
+    public Try<Void> ofConsumer(CheckedConsumer3<A1, A2, A3> work) {
+      return Try.ofRunnable(() -> {
+        try(A1 a1 = resource1.apply(); A2 a2 = resource2.apply(); A3 a3 = resource3.apply()){
+          work.apply(a1, a2, a3);
+        }
+      });
+    }
+  }
+
+  record WithResouce4<A1 extends AutoCloseable, A2 extends AutoCloseable, A3 extends AutoCloseable, A4 extends AutoCloseable>(Function0<A1> resource1, Function0<A2> resource2, Function0<A3> resource3, Function0<A4> resource4) {
+    public <A5 extends AutoCloseable> WithResouce5<A1, A2, A3, A4, A5> withResource(Function0<A5> resource5) {
+      return new WithResouce5<>(resource1, resource2, resource3, resource4, resource5);
+    }
+    public <B>Try<B> of(Function4<? super A1, ? super A2, ? super A3, ? super A4, ? extends B> work) {
+      return Try.of(() -> {
+        try(A1 a1 = resource1.apply(); A2 a2 = resource2.apply(); A3 a3 = resource3.apply(); A4 a4 = resource4.apply()){
+          return work.apply(a1, a2, a3, a4);
+        }
+      });
+    }
+    public Try<Void> ofConsumer(CheckedConsumer4<A1, A2, A3, A4> work) {
+      return Try.ofRunnable(() -> {
+        try(A1 a1 = resource1.apply(); A2 a2 = resource2.apply(); A3 a3 = resource3.apply(); A4 a4 = resource4.apply()){
+          work.apply(a1, a2, a3, a4);
+        }
+      });
+    }
+  }
+
+  record WithResouce5<A1 extends AutoCloseable, A2 extends AutoCloseable, A3 extends AutoCloseable, A4 extends AutoCloseable, A5 extends AutoCloseable>(Function0<A1> resource1, Function0<A2> resource2, Function0<A3> resource3, Function0<A4> resource4, Function0<A5> resource5) {
+    public <B>Try<B> of(Function5<? super A1, ? super A2, ? super A3, ? super A4, ? super A5, ? extends B> work) {
+      return Try.of(() -> {
+        try(A1 a1 = resource1.apply(); A2 a2 = resource2.apply(); A3 a3 = resource3.apply(); A4 a4 = resource4.apply(); A5 a5 = resource5.apply()){
+          return work.apply(a1, a2, a3, a4, a5);
+        }
+      });
+    }
+    public Try<Void> ofConsumer(CheckedConsumer5<A1, A2, A3, A4, A5> work) {
+      return Try.ofRunnable(() -> {
+        try(A1 a1 = resource1.apply(); A2 a2 = resource2.apply(); A3 a3 = resource3.apply(); A4 a4 = resource4.apply(); A5 a5 = resource5.apply()){
+          work.apply(a1, a2, a3, a4, a5);
+        }
+      });
     }
   }
 }
