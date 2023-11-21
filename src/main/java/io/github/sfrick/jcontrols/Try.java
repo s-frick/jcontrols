@@ -6,11 +6,12 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+//TODO: add javadoc
 public sealed interface Try<A> permits Try.Failure, Try.Success {
   /**
    * @param <A>
    * @param value
-   * @return
+   * @return {@link Try}
    */
   static <A> Try<A> success(A value) {
     return new Success<>(value);
@@ -20,7 +21,7 @@ public sealed interface Try<A> permits Try.Failure, Try.Success {
   /**
    * @param <A>
    * @param cause
-   * @return
+   * @return {@link Try}
    */
   static <A> Try<A> failure(Throwable cause) {
     return new Failure<>(cause);
@@ -28,7 +29,7 @@ public sealed interface Try<A> permits Try.Failure, Try.Success {
 
   /**
    * @param runnable
-   * @return
+   * @return {@link Try}
    */
   static Try<Void> ofRunnable(CheckedRunnable runnable){
     Objects.requireNonNull(runnable);
@@ -40,6 +41,11 @@ public sealed interface Try<A> permits Try.Failure, Try.Success {
     }
   }
 
+  /**
+   * @param <A>
+   * @param work that may fail with an {@link Throwable}
+   * @return {@link Try}
+   */
   static <A> Try<A> of(Function0<A> work){
     Objects.requireNonNull(work);
     try {
@@ -49,62 +55,63 @@ public sealed interface Try<A> permits Try.Failure, Try.Success {
     }
   }
 
-  static <A extends AutoCloseable> WithResouce1<A> withResource(Function0<A> resource) {
-    return new WithResouce1<>(resource);
-  }
-
-  static <A1 extends AutoCloseable, A2 extends AutoCloseable> WithResouce2<A1, A2> withResource(Function0<A1> resource1, Function0<A2> resource2) {
-    return new WithResouce2<>(resource1,resource2);
+  /**
+   * @param <A>
+   * @param resource
+   * @return {@link Try}
+   */
+  static <A extends AutoCloseable> WithResource1<A> withResource(Function0<A> resource) {
+    return new WithResource1<>(resource);
   }
 
   /**
    * @param other
-   * @return
+   * @return {@link Try}
    */
   Try<A> or(Try<A> other);
 
   /**
    * @param other
-   * @return
+   * @return {@link Try}
    */
   Try<A> or(Supplier<Try<A>> other);
 
   /**
    * @param other
-   * @return
+   * @return either value of {@link Try} or other
    */
   A orElse(A other);
 
   /**
    * @param other
-   * @return
+   * @return either value of {@link Try} or value from {@link Supplier}
    */
   A orElse(Supplier<A> other);
 
   /**
-   * @return
+   * @return true if {@link Try} is {@link Failure}
    */
   boolean isFailure();
 
   /**
-   * @return
+   * @return true if {@link Try} is {@link Success}
    */
   boolean isSuccess(); 
 
   /**
-   * @return
+   * @return {@link Either} transformed from this {@link Try}
    */
   Either<Throwable, A> toEither();
 
   /**
-   * @return
+   * @return {@link Optional} transformed from this {@link Try}
    */
   Optional<A> toOptional();
 
   /**
    * @param <B>
    * @param f
-   * @return
+   * @return {@link Try}
    */
   default <B> Try<B> map(Function<? super A, ? extends B> f) {
     return this.flatMap(x -> success(f.apply(x)));
@@ -113,10 +120,15 @@ public sealed interface Try<A> permits Try.Failure, Try.Success {
   /**
    * @param <B>
    * @param f
-   * @return
+   * @return {@link Try}
    */
   <B> Try<B> flatMap(Function<? super A, ? extends Try<B>> f);
 
+  /**
+   * @param predicate
+   * @param throwable
+   * @return a filtered {@link Try}
+   */
   Try<A> filter(Predicate<A> predicate, Supplier<? extends Throwable> throwable);
 
   record Success<T>(T value) implements Try<T> {
@@ -237,10 +249,21 @@ public sealed interface Try<A> permits Try.Failure, Try.Success {
     }
   }
   
-  record WithResouce1<A1 extends AutoCloseable>(Function0<A1> resource) {
-    public <A2 extends AutoCloseable> WithResouce2<A1, A2> withResource(Function0<A2> resource2) {
-      return new WithResouce2<A1, A2>(resource, resource2);
+  record WithResource1<A1 extends AutoCloseable>(Function0<A1> resource) {
+    /**
+     * @param <A2> type param for resource1
+     * @param resource2
+     * @return {@link WithResource2}
+     */
+    public <A2 extends AutoCloseable> WithResource2<A1, A2> withResource(Function0<A2> resource2) {
+      return new WithResource2<A1, A2>(resource, resource2);
     }
+    /**
+     * Constructs from WithResources builder a {@link Try}
+     * @param <B> type of returned value from work
+     * @param work that may fail with an {@link Throwable}
+     * @return {@link Try}
+     */
     public <B> Try<B> of(Function1<? super A1, ? extends B> work) {
       return Try.of(() -> {
         try(A1 a = resource.apply()){
@@ -249,6 +272,11 @@ public sealed interface Try<A> permits Try.Failure, Try.Success {
       });
     }
 
+    /**
+     * Constructs from WithResources builder a {@link Try}
+     * @param work that may fail with an {@link Throwable}
+     * @return {@link Try}
+     */
     public Try<Void> ofConsumer(CheckedConsumer1<A1> work) {
       return Try.ofRunnable(() -> {
         try(A1 a = resource.apply()){
@@ -258,10 +286,21 @@ public sealed interface Try<A> permits Try.Failure, Try.Success {
     }
   }
 
-  record WithResouce2<A1 extends AutoCloseable, A2 extends AutoCloseable>(Function0<A1> resource1, Function0<A2> resource2) {
-    public <A3 extends AutoCloseable> WithResouce3<A1, A2, A3> withResource(Function0<A3> resource3) {
-      return new WithResouce3<A1, A2, A3>(resource1, resource2, resource3);
+  record WithResource2<A1 extends AutoCloseable, A2 extends AutoCloseable>(Function0<A1> resource1, Function0<A2> resource2) {
+    /**
+     * @param <A3> type param for resource3
+     * @param resource3
+     * @return {@link WithResource3}
+     */
+    public <A3 extends AutoCloseable> WithResource3<A1, A2, A3> withResource(Function0<A3> resource3) {
+      return new WithResource3<A1, A2, A3>(resource1, resource2, resource3);
     }
+    /**
+     * Constructs from WithResources builder a {@link Try}
+     * @param <B> type of returned value from work
+     * @param work that may fail with an {@link Throwable}
+     * @return {@link Try}
+     */
     public <B>Try<B> of(Function2<? super A1, ? super A2, ? extends B> work) {
       return Try.of(() -> {
         try(A1 a1 = resource1.apply(); A2 a2 = resource2.apply()){
@@ -269,6 +308,11 @@ public sealed interface Try<A> permits Try.Failure, Try.Success {
         }
       });
     }
+    /**
+     * Constructs from WithResources builder a {@link Try}
+     * @param work that may fail with an {@link Throwable}
+     * @return {@link Try}
+     */
     public Try<Void> ofConsumer(CheckedConsumer2<A1, A2> work) {
       return Try.ofRunnable(() -> {
         try(A1 a1 = resource1.apply(); A2 a2 = resource2.apply()){
@@ -278,10 +322,22 @@ public sealed interface Try<A> permits Try.Failure, Try.Success {
     }
   }
 
-  record WithResouce3<A1 extends AutoCloseable, A2 extends AutoCloseable, A3 extends AutoCloseable>(Function0<A1> resource1, Function0<A2> resource2, Function0<A3> resource3) {
-    public <A4 extends AutoCloseable> WithResouce4<A1, A2, A3, A4> withResource(Function0<A4> resource4) {
-      return new WithResouce4<>(resource1, resource2, resource3, resource4);
+  record WithResource3<A1 extends AutoCloseable, A2 extends AutoCloseable, A3 extends AutoCloseable>(Function0<A1> resource1, Function0<A2> resource2, Function0<A3> resource3) {
+    /**
+     * Adds a resource
+     * @param <A4> type param for resource3
+     * @param resource4
+     * @return {@link WithResource4}
+     */
+    public <A4 extends AutoCloseable> WithResource4<A1, A2, A3, A4> withResource(Function0<A4> resource4) {
+      return new WithResource4<>(resource1, resource2, resource3, resource4);
     }
+    /**
+     * Constructs from WithResources builder a {@link Try}
+     * @param <B> type param for resource2
+     * @param work that may fail with an {@link Throwable}
+     * @return {@link Try}
+     */
     public <B>Try<B> of(Function3<? super A1, ? super A2, ? super A3, ? extends B> work) {
       return Try.of(() -> {
         try(A1 a1 = resource1.apply(); A2 a2 = resource2.apply(); A3 a3 = resource3.apply()){
@@ -289,6 +345,11 @@ public sealed interface Try<A> permits Try.Failure, Try.Success {
         }
       });
     }
+    /**
+     * Constructs from WithResources builder a {@link Try}
+     * @param work that may fail with an {@link Throwable}
+     * @return {@link Try}
+     */
     public Try<Void> ofConsumer(CheckedConsumer3<A1, A2, A3> work) {
       return Try.ofRunnable(() -> {
         try(A1 a1 = resource1.apply(); A2 a2 = resource2.apply(); A3 a3 = resource3.apply()){
@@ -298,10 +359,22 @@ public sealed interface Try<A> permits Try.Failure, Try.Success {
     }
   }
 
-  record WithResouce4<A1 extends AutoCloseable, A2 extends AutoCloseable, A3 extends AutoCloseable, A4 extends AutoCloseable>(Function0<A1> resource1, Function0<A2> resource2, Function0<A3> resource3, Function0<A4> resource4) {
-    public <A5 extends AutoCloseable> WithResouce5<A1, A2, A3, A4, A5> withResource(Function0<A5> resource5) {
-      return new WithResouce5<>(resource1, resource2, resource3, resource4, resource5);
+  record WithResource4<A1 extends AutoCloseable, A2 extends AutoCloseable, A3 extends AutoCloseable, A4 extends AutoCloseable>(Function0<A1> resource1, Function0<A2> resource2, Function0<A3> resource3, Function0<A4> resource4) {
+    /**
+     * Adds a resource
+     * @param <A5> type param for resource3
+     * @param resource5
+     * @return {@link WithResource5}
+     */
+    public <A5 extends AutoCloseable> WithResource5<A1, A2, A3, A4, A5> withResource(Function0<A5> resource5) {
+      return new WithResource5<>(resource1, resource2, resource3, resource4, resource5);
     }
+    /**
+     * Constructs from WithResources builder a {@link Try}
+     * @param <B> type of returned value from work
+     * @param work that may fail with an {@link Throwable}
+     * @return {@link Try}
+     */
     public <B>Try<B> of(Function4<? super A1, ? super A2, ? super A3, ? super A4, ? extends B> work) {
       return Try.of(() -> {
         try(A1 a1 = resource1.apply(); A2 a2 = resource2.apply(); A3 a3 = resource3.apply(); A4 a4 = resource4.apply()){
@@ -309,6 +382,11 @@ public sealed interface Try<A> permits Try.Failure, Try.Success {
         }
       });
     }
+    /**
+     * Constructs from WithResources builder a {@link Try}
+     * @param work that may fail with an {@link Throwable}
+     * @return {@link Try}
+     */
     public Try<Void> ofConsumer(CheckedConsumer4<A1, A2, A3, A4> work) {
       return Try.ofRunnable(() -> {
         try(A1 a1 = resource1.apply(); A2 a2 = resource2.apply(); A3 a3 = resource3.apply(); A4 a4 = resource4.apply()){
@@ -318,7 +396,13 @@ public sealed interface Try<A> permits Try.Failure, Try.Success {
     }
   }
 
-  record WithResouce5<A1 extends AutoCloseable, A2 extends AutoCloseable, A3 extends AutoCloseable, A4 extends AutoCloseable, A5 extends AutoCloseable>(Function0<A1> resource1, Function0<A2> resource2, Function0<A3> resource3, Function0<A4> resource4, Function0<A5> resource5) {
+  record WithResource5<A1 extends AutoCloseable, A2 extends AutoCloseable, A3 extends AutoCloseable, A4 extends AutoCloseable, A5 extends AutoCloseable>(Function0<A1> resource1, Function0<A2> resource2, Function0<A3> resource3, Function0<A4> resource4, Function0<A5> resource5) {
+    /**
+     * Constructs from WithResources builder a {@link Try}
+     * @param <B> type of returned value from work
+     * @param work that may fail with an {@link Throwable}
+     * @return {@link Try}
+     */
     public <B>Try<B> of(Function5<? super A1, ? super A2, ? super A3, ? super A4, ? super A5, ? extends B> work) {
       return Try.of(() -> {
         try(A1 a1 = resource1.apply(); A2 a2 = resource2.apply(); A3 a3 = resource3.apply(); A4 a4 = resource4.apply(); A5 a5 = resource5.apply()){
@@ -326,6 +410,11 @@ public sealed interface Try<A> permits Try.Failure, Try.Success {
         }
       });
     }
+    /**
+     * Constructs from WithResources builder a {@link Try}
+     * @param work that may fail with an {@link Throwable}
+     * @return {@link Try}
+     */
     public Try<Void> ofConsumer(CheckedConsumer5<A1, A2, A3, A4, A5> work) {
       return Try.ofRunnable(() -> {
         try(A1 a1 = resource1.apply(); A2 a2 = resource2.apply(); A3 a3 = resource3.apply(); A4 a4 = resource4.apply(); A5 a5 = resource5.apply()){

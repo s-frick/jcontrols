@@ -23,6 +23,18 @@ public class TryExampleTest {
     // doStuff
   }
 
+  private Hero findHeroByName(InputStream i, String name) throws Throwable {
+    return new Hero(name);
+  }
+
+  private Try<Human> tryTransformHulk(Hero hulk) {
+    return Try.of(() -> transformHulk(hulk));
+  }
+
+  private Human transformHulk(Hero hulk) throws Throwable {
+    return new Human(hulk.name());
+  }
+
   @Test
   void tryWith2ResourcesAndConsumer() {
     Try<Void> actual = Try
@@ -30,10 +42,20 @@ public class TryExampleTest {
       .withResource(this::outputThrows)
       .ofConsumer(this::transformHeroes);
 
+    Try
+      .withResource(this::input)
+      .of((r) -> findHeroByName(r, "Hulk"))
+      .flatMap(this::tryTransformHulk);
 
     assertThat(actual.isFailure()).isTrue();
     assertThat(actual).isInstanceOf(Try.Failure.class);
     assertThat(( (Try.Failure<Void>)actual ).cause()).isInstanceOf(FileNotFoundException.class);
   }
   
+  record Hero(String name) {
+
+  }
+  record Human(String name) {
+
+  }
 }
